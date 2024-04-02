@@ -1,6 +1,10 @@
 name: Docker Image CI
 
 on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
   workflow_dispatch:
     inputs:
       img:
@@ -25,8 +29,8 @@ jobs:
       - name: Build and push image
         env:
           IMG_NAME: ${{ github.event.inputs.img }}
-          IMG_NEW_NAME: ${{ github.event.inputs.img-new-tag }}
+          IMG_NEW_NAME: ${{ github.event.inputs.img-new-name }}
         run: |
           docker pull ${IMG_NAME}
-          docker tag ${IMG_NAME} registry.cn-hangzhou.aliyuncs.com/test/${IMG_NEW_NAME}
-          docker push registry.cn-hangzhou.aliyuncs.com/test/${IMG_NEW_NAME}
+          docker tag ${IMG_NAME} registry.cn-hangzhou.aliyuncs.com/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME}
+          docker push registry.cn-hangzhou.aliyuncs.com/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME}
