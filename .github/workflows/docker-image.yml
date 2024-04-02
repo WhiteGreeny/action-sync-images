@@ -1,0 +1,36 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      img:
+        description: "image to download, for instance, tensorflow/tensorflow"
+        required: true
+      img-new-name:
+        description: "new Image name"
+        required: true
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to ACR
+        uses: aliyun/acr-login@v1
+        with:
+          login-server: https://registry.cn-hangzhou.aliyuncs.com
+          username: "${{ secrets.DOCKER_USERNAME }}"
+          password: "${{ secrets.DOCKER_PASSWORD }}"
+      - name: Build and push image
+        env:
+          IMG_NAME: ${{ github.event.inputs.img }}
+          IMG_NEW_NAME: ${{ github.event.inputs.img-new-tag }}
+        run: |
+          docker pull ${IMG_NAME}
+          docker tag ${IMG_NAME} registry.cn-hangzhou.aliyuncs.com/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME}
+          docker push registry.cn-hangzhou.aliyuncs.com/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME}
