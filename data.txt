@@ -1,2 +1,1 @@
-kubesphere/kube-rbac-proxy:v0.11.0,kubesphere-kube-rbac-proxy:v0.11.0
-rancher/klipper-lb:v0.4.7,rancher-klipper-lb:v0.4.7
+bash:5.1.4@sha256:c523c636b722339f41b6a431b44588ab2f762c5de5ec3bd7964420ff982fb1d9,bash:5.1.4
