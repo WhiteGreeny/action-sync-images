@@ -1,6 +1,8 @@
 name: Docker Image Sync Batch
 
 on:
+  push:
+    branches: [ "master" ]
   workflow_dispatch:
 jobs:
 
