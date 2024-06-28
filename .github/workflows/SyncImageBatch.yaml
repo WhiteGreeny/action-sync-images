@@ -1,0 +1,36 @@
+name: Docker Image Sync Batch
+
+on:
+  workflow_dispatch:
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to ACR
+        uses: aliyun/acr-login@v1
+        with:
+          login-server: https://${{ secrets.REGISTRY_URL }}
+          username: "${{ secrets.DOCKER_USERNAME }}"
+          password: "${{ secrets.DOCKER_PASSWORD }}"
+      - name: Build and push image
+        run: |
+          # 读取文件内容，逐行处理
+          while IFS= read -r line; do
+              # 根据逗号分隔成两部分
+              part1=$(echo "$line" | cut -d',' -f1)
+              part2=$(echo "$line" | cut -d',' -f2)
+
+              # 输出分隔后的两部分内容（可选）
+              echo "Part 1: $part1"
+              echo "Part 2: $part2"
+
+              # 这里可以根据实际需求编写逻辑，例如：
+              # 处理 part1
+              # ...
+
+              # 处理 part2
+              # ...
+          done < data.txt
