@@ -17,6 +17,8 @@ jobs:
           password: "${{ secrets.DOCKER_PASSWORD }}"
       - name: Build and push image
         run: |
+          pwd
+          ls -alh
           # 读取文件内容，逐行处理
           while IFS= read -r line; do
               # 根据逗号分隔成两部分
