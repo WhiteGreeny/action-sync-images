@@ -1,2 +1,2 @@
-a:v1-bc,cd/ok:7788v
-dg/oer:v2-ok,dg-oer:7799
+jasminexzzz/blossom:latest,jasminexzzz-blossom:latest
+mysql:8.0.31,mysql:8.0.31
