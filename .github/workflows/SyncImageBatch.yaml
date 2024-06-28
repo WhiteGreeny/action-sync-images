@@ -18,8 +18,6 @@ jobs:
           password: "${{ secrets.DOCKER_PASSWORD }}"
       - name: Build and push image
         run: |
-          pwd
-          ls -alh
           # 读取文件内容，逐行处理
           while IFS= read -r line; do
               # 根据逗号分隔成两部分
@@ -29,11 +27,8 @@ jobs:
               # 输出分隔后的两部分内容（可选）
               echo "Part 1: $part1"
               echo "Part 2: $part2"
-
-              # 这里可以根据实际需求编写逻辑，例如：
-              # 处理 part1
-              # ...
-
-              # 处理 part2
-              # ...
+              
+              docker pull ${part1}
+              docker tag ${part1} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
+              docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
           done < data.txt
