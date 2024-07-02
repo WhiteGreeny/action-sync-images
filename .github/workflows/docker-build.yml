@@ -25,7 +25,7 @@ jobs:
       - name: Build and push image
         env:
           DOCKERFILE: ${{ github.event.inputs.dockerfile }}
-          IMG_NEW_NAME: ${{ github.event.inputs.img-new-name }}
+          IMG_NEW_NAME: ${{ github.event.inputs.img-name }}
         run: |
           docker build -f ${DOCKERFILE} -t ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME} .
           docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME}
