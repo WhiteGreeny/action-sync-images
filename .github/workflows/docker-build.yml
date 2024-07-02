@@ -1,0 +1,31 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      dockerfile:
+        description: "dockerfile"
+        required: true
+      img-name:
+        description: "new Image name"
+        required: true
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to ACR
+        uses: aliyun/acr-login@v1
+        with:
+          login-server: https://${{ secrets.REGISTRY_URL }}
+          username: "${{ secrets.DOCKER_USERNAME }}"
+          password: "${{ secrets.DOCKER_PASSWORD }}"
+      - name: Build and push image
+        env:
+          DOCKERFILE: ${{ github.event.inputs.dockerfile }}
+          IMG_NEW_NAME: ${{ github.event.inputs.img-new-name }}
+        run: |
+          docker build -f ${DOCKERFILE} -t ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME} .
+          docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${IMG_NEW_NAME}
