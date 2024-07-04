@@ -1,8 +1,8 @@
-node:14.21.3-alpine3.17 node:14.21.3-alpine3.17-amd64
-node@sha256:3380ed827b250d2db2bd38c15f090af2b303b3c9ebb42f5927cb5b9adeea7a6e node:14.21.3-alpine3.17-arm64
-node:16.20.2-alpine3.18 node:16.20.2-alpine3.18-amd64
-node@sha256:389082e6fa6f0d442e6d934dd8531350373e4b1a9be364949fc84ff7c62186af node:16.20.2-alpine3.18-arm64
-amazoncorretto:8@sha256:693148eccca9f6883042b5a1f9fa2c58ecb95b7c1fa581e949f99faf5ab3342f amazoncorretto:8-amd64
-amazoncorretto:8@sha256:72982cacc0763b3e4402b7727371885ce13a00576cec0988151fb14960c8e265 amazoncorretto:8-arm64
-nginx:stable@sha256:d987469c32fecb3f839a4606671eb2bb308039a3a6b2d086341769da3931b9b6 nginx:stable-amd64
-nginx:stable@sha256:c0168c3303b11baba556255e523bc2d302abc81ef2a3c006a29f75f815858f00 nginx:stable-arm64
+node:14.21.3-alpine3.17,node:14.21.3-alpine3.17-amd64
+node@sha256:3380ed827b250d2db2bd38c15f090af2b303b3c9ebb42f5927cb5b9adeea7a6e,node:14.21.3-alpine3.17-arm64
+node:16.20.2-alpine3.18,node:16.20.2-alpine3.18-amd64
+node@sha256:389082e6fa6f0d442e6d934dd8531350373e4b1a9be364949fc84ff7c62186af,node:16.20.2-alpine3.18-arm64
+amazoncorretto:8@sha256:693148eccca9f6883042b5a1f9fa2c58ecb95b7c1fa581e949f99faf5ab3342f,amazoncorretto:8-amd64
+amazoncorretto:8@sha256:72982cacc0763b3e4402b7727371885ce13a00576cec0988151fb14960c8e265,amazoncorretto:8-arm64
+nginx:stable@sha256:d987469c32fecb3f839a4606671eb2bb308039a3a6b2d086341769da3931b9b6,nginx:stable-amd64
+nginx:stable@sha256:c0168c3303b11baba556255e523bc2d302abc81ef2a3c006a29f75f815858f00,nginx:stable-arm64
