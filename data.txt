@@ -1,1 +1,1 @@
-grafana/promtail:2.9.3,grafana-promtail:2.9.3
+bitnami/redis:7.2.4-debian-12-r9,bitnami-redis:7.2.4-debian-12-r9
