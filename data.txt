@@ -1,1 +1,1 @@
-postgres:16.2,postgres:16.2
+postgres:12.19,postgres:12.19
