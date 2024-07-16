@@ -1,1 +1,2 @@
-postgres:12.19,postgres:12.19
+amazoncorretto:17@sha256:53e0c25e9eaf5e0da564c53eca8b9fd145a61aa307dee0d410c866d23466c170 amazoncorretto:17-amd64
+amazoncorretto:17@sha256:a705cf97581c9c6cadf730f8ea997bfffc0bf6b96c0d1407ed1931b56b225b07 amazoncorretto:17-arm64
