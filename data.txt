@@ -1,1 +1,1 @@
-nginxinc/nginx-unprivileged:stable,nginx-unprivileged:stable
+chainguard/git:latest,chainguard-git:latest
