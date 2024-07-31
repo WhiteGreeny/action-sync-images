@@ -1,1 +1,1 @@
-chainguard/git:latest,chainguard-git:latest
+rancher-klipper-helm:v0.8.3-build20240228,rancher/klipper-helm:v0.8.3-build20240228
