@@ -36,4 +36,5 @@ jobs:
               docker pull ${part1}/${part2}
               docker tag ${part1}/${part2} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
               docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
-          done < data.txt
+          done < images-v2.txt
+
