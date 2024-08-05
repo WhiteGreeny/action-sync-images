@@ -1,0 +1,2 @@
+redis:6.2.14
+rancher/mirrored-library-traefik:2.10.7
