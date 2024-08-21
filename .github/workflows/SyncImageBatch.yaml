@@ -22,19 +22,34 @@ jobs:
         run: |
           # 读取文件内容，逐行处理
           while IFS= read -r line; do
-              # 根据斜杠分隔成两部分
-              part1=$(echo "$line" | cut -d'/' -f1)
-              part2=$(echo "$line" | cut -d'/' -f2)
-
-              if [[ ! $line =~ / ]] ; then
-                  part1=library
+              if grep -q "^#" <<< "$line"; then
+                  # 如果是注释行，则跳过处理
+                  continue
+              elif [ -z "$line" ]; then
+                  # 如果是空行，则跳过处理
+                  continue
+              elif grep -q "," <<< "$line"; then
+                  # 如果包含逗号，则使用 cut 命令进行分割
+                  part1=$(echo "$line" | cut -d',' -f1)
+                  part2=$(echo "$line" | cut -d',' -f2)
+                  # 输出分隔后的两部分内容（可选）
+                  echo "Part 1: $part1"
+                  echo "Part 2: $part2"
+                  docker pull ${part1}
+                  docker tag ${part1} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
+                  docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
+              else
+                  # 根据斜杠分隔成两部分
+                  part1=$(echo "$line" | cut -d'/' -f1)
+                  part2=$(echo "$line" | cut -d'/' -f2)
+                  if [[ ! $line =~ / ]] ; then
+                      part1=library
+                  fi
+                  # 输出分隔后的两部分内容（可选）
+                  echo "Part 1: $part1"
+                  echo "Part 2: $part2"
+                  docker pull ${part1}/${part2}
+                  docker tag ${part1}/${part2} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
+                  docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
               fi
-              # 输出分隔后的两部分内容（可选）
-              echo "Part 1: $part1"
-              echo "Part 2: $part2"
-              
-              docker pull ${part1}/${part2}
-              docker tag ${part1}/${part2} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
-              docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
           done < images-v2.txt
-
