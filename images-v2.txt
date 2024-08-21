@@ -1,7 +1,7 @@
 redis:6.2.14
 # 多平台架构
-nacos/nacos-server:v2.4.1@sha256:513a627397b1b555abbeff3a9dfa2ed347650bb5c7f2428358289b1a52135322 nacos-server:v2.4.1-amd64
-nacos/nacos-server:v2.4.1@sha256:c70e6ededc1808895b525e9ec9c4649dd7ab148be8953bea73c34585770af73b nacos-server:v2.4.1-arm64
-nacos/nacos-server:v1.4.8-slim@sha256:e03a115433a2491aca7609a4cd2bcec01bd77a80d4af526074853d29b00ec856 nacos-server:v1.4.8-slim-amd64
-nacos/nacos-server:v1.4.8-slim@sha256:7336edbb236f80a3cce4ff26091977bbd53053d6efabda9f58943449eb053bf0 nacos-server:v1.4.8-slim-arm64
+nacos/nacos-server:v2.4.1@sha256:513a627397b1b555abbeff3a9dfa2ed347650bb5c7f2428358289b1a52135322,nacos-server:v2.4.1-amd64
+nacos/nacos-server:v2.4.1@sha256:c70e6ededc1808895b525e9ec9c4649dd7ab148be8953bea73c34585770af73b,nacos-server:v2.4.1-arm64
+nacos/nacos-server:v1.4.8-slim@sha256:e03a115433a2491aca7609a4cd2bcec01bd77a80d4af526074853d29b00ec856,nacos-server:v1.4.8-slim-amd64
+nacos/nacos-server:v1.4.8-slim@sha256:7336edbb236f80a3cce4ff26091977bbd53053d6efabda9f58943449eb053bf0,nacos-server:v1.4.8-slim-arm64
 
