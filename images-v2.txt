@@ -1,6 +1,2 @@
 # 多平台架构
-postgres:12.20@sha256:b9ce8a68071b79d666e109e4bb5593e176513d52097a548dc98439b5911478f7,postgres:12.20-arm64
-postgres:12.20@sha256:ff98499f61151dc920ff4d9add85eda0f1ce28f7838c4859cfcde4112ef819e5,postgres:12.20-amd64
-mysql:8.4.2@sha256:12f800accdf4aacff75dc1b00a41b17be628240e9f6f8cb355a185df4f86e151,mysql:8.4.2-amd64
-mysql:8.4.2@sha256:19b3ba2b959ec564bc25d09b2a04a2cb1558be581ba3d0b31d7515d6727efdb1,mysql:8.4.2-arm64
-
+hagb/docker-easyconnect:7.6.3
