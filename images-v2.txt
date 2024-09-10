@@ -1,2 +1,1 @@
-# 多平台架构
-hagb/docker-easyconnect:7.6.3
+goharbor/prepare:v2.11.1
