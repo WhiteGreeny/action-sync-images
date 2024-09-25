@@ -1,1 +1,1 @@
-minio/minio:latest,minio:latest
+ghcr.io/willnorris/imageproxy:latest imageproxy:latest
