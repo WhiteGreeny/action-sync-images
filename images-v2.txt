@@ -1,1 +1,1 @@
-ghcr.io/willnorris/imageproxy:latest,imageproxy:latest
+jasminexzzz/blossom:latest,jasminexzzz-blossom:latest
