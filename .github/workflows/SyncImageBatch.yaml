@@ -55,11 +55,11 @@ jobs:
               IMAGE_TARGET_NAME=$(echo -n "$IMAGE_TARGET" | cut -d':' -f1)
               IMAGE_TARGET_TAG=$(echo -n "$IMAGE_TARGET" | cut -d':' -f2)
               docker pull --platform=amd64 $IMAGE_ORIGIN
-              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}-amd64:${IMAGE_TARGET_TAG}
-              docker push ${IMAGE_TARGET_NAME}-amd64:${IMAGE_TARGET_TAG}
+              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
+              docker push ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
               docker pull --platform=arm64 $IMAGE_ORIGIN
-              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}-arm64:${IMAGE_TARGET_TAG}
-              docker push ${IMAGE_TARGET_NAME}-arm64:${IMAGE_TARGET_TAG}
-              docker manifest create ${IMAGE_TARGET} ${IMAGE_TARGET_NAME}-amd64:${IMAGE_TARGET_TAG} ${IMAGE_TARGET_NAME}-arm64:${IMAGE_TARGET_TAG}
+              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
+              docker push ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
+              docker manifest create ${IMAGE_TARGET} ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64 ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
               docker manifest push ${IMAGE_TARGET}
           done < images-v2.txt
