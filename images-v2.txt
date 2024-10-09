@@ -1,1 +1,1 @@
-jasminexzzz/blossom:latest,jasminexzzz-blossom:latest
+amazoncorretto:23
