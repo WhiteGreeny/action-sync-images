@@ -1,1 +1,2 @@
-rancher/mirrored-pause:3.6
+rancher/klipper-lb:v0.4.9
+rancher/mirrored-library-traefik:2.11.8
