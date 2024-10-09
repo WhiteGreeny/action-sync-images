@@ -35,9 +35,8 @@ jobs:
                   # 输出分隔后的两部分内容（可选）
                   echo "Part 1: $part1"
                   echo "Part 2: $part2"
-                  docker pull ${part1}
-                  docker tag ${part1} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
-                  docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
+                  IMAGE_ORIGIN=${part1}
+                  IMAGE_TARGET=${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
               else
                   # 根据斜杠分隔成两部分
                   part1=$(echo "$line" | cut -d'/' -f1)
@@ -48,8 +47,19 @@ jobs:
                   # 输出分隔后的两部分内容（可选）
                   echo "Part 1: $part1"
                   echo "Part 2: $part2"
-                  docker pull ${part1}/${part2}
-                  docker tag ${part1}/${part2} ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
-                  docker push ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
+                  IMAGE_ORIGIN=${part1}/${part2}
+                  IMAGE_TARGET=${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
               fi
+              echo "IMAGE_ORIGIN: $IMAGE_ORIGIN"
+              echo "IMAGE_TARGET: $IMAGE_TARGET"
+              IMAGE_TARGET_NAME=$(echo -n "$IMAGE_TARGET" | cut -d':' -f1)
+              IMAGE_TARGET_TAG=$(echo -n "$IMAGE_TARGET" | cut -d':' -f2)
+              docker pull --platform=amd64 $IMAGE_ORIGIN
+              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}-amd64:${IMAGE_TARGET_TAG}
+              docker push ${IMAGE_TARGET_NAME}-amd64:${IMAGE_TARGET_TAG}
+              docker pull --platform=arm64 $IMAGE_ORIGIN
+              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}-arm64:${IMAGE_TARGET_TAG}
+              docker push ${IMAGE_TARGET_NAME}-arm64:${IMAGE_TARGET_TAG}
+              docker manifest create ${IMAGE_TARGET} ${IMAGE_TARGET_NAME}-amd64:${IMAGE_TARGET_TAG} ${IMAGE_TARGET_NAME}-arm64:${IMAGE_TARGET_TAG}
+              docker manifest push ${IMAGE_TARGET}
           done < images-v2.txt
