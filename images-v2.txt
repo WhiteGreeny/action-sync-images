@@ -1,1 +1,2 @@
-grafana/grafana:10.4.1
+library/busybox:1.31.1
+curlimages/curl:7.85.0
