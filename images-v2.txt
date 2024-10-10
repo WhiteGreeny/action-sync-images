@@ -1,3 +1,2 @@
-quay.io/argoproj/argocd:latest,argoproj-argocd:latest
-ghcr.io/dexidp/dex:v2.41.1,dexidp-dex:v2.41.1
-redis:7.0.15-alpine
+quay.io/argoproj/argocd:v2.13.0-rc3,argoproj-argocd:v2.13.0-rc3
+
