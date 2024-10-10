@@ -1,2 +1,2 @@
-rancher/klipper-lb:v0.4.9
-rancher/mirrored-library-traefik:2.11.8
+quay.io/metallb/controller:v0.14.8,metallb-controller:v0.14.8
+quay.io/metallb/speaker:v0.14.8,metallb-speaker:v0.14.8
