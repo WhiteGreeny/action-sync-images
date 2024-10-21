@@ -1,1 +1,2 @@
-minio/minio:RELEASE.2024-10-13T13-34-11Z
+kubesphere/metrics-server:v0.7.0
+kubesphere/addon-resizer:1.8.20
