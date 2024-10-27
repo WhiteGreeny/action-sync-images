@@ -1,1 +1,3 @@
-kubesphere/whizard-telemetry-apiserver:v1.2.2
+hoppscotch/hoppscotch-frontend:2024.9.3,hoppscotch-frontend:2024.9.3
+hoppscotch/hoppscotch-backend:2024.9.3,hoppscotch-backend:2024.9.3
+hoppscotch/hoppscotch-admin:2024.9.3,hoppscotch-admin:2024.9.3
