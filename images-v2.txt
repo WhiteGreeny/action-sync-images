@@ -1,1 +1,1 @@
-b3log/siyuan:v3.1.10
+prom/node-exporter:v1.3.1
