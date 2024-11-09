@@ -1,1 +1,1 @@
-nginx:stable
+hagb/docker-easyconnect:7.6.7
