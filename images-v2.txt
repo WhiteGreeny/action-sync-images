@@ -1,1 +1,3 @@
-alpine:3.12
+eclipse-temurin:8
+eclipse-temurin:17
+eclipse-temurin:21
