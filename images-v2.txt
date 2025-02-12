@@ -1,1 +1,1 @@
-discourse/base:2.0.20250105-0017
+ghcr.io/open-webui/open-webui:main,open-webui:main
