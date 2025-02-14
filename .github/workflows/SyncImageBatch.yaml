@@ -59,7 +59,7 @@ jobs:
               docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
               docker push ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
               docker pull --platform=arm64 $IMAGE_ORIGIN || ARM_IMAGE_EXISTS=false
-              if [ "$ARM_IMAGE_EXISTS"="true" ] ; then
+              if [ "$ARM_IMAGE_EXISTS"=="true" ] ; then
                   docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
                   docker push ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
                   docker manifest create ${IMAGE_TARGET} ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64 ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
