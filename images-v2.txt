@@ -1,3 +1,1 @@
-library/caddy:2-alpine
-valkey/valkey:8-alpine
-searxng/searxng:latest
+milvusdb/milvus:v2.5.4
