@@ -1,1 +1,1 @@
-binwiederhier/ntfy:latest
+eclipse-temurin:21.0.6_7-jdk-ubi9-minimal
