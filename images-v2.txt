@@ -1,1 +1,1 @@
-eclipse-temurin:21.0.6_7-jdk-ubi9-minimal
+longhornio/longhorn-cli:v1.8.1
