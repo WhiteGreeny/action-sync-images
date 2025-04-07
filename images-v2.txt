@@ -1,2 +1,1 @@
-amazoncorretto:21
-amazoncorretto:8
+gradle:8-jdk21-corretto
