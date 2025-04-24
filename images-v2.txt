@@ -1,1 +1,1 @@
-openui:latest
+ghcr.io/wandb/openui:latest,wandb-openui:latest
