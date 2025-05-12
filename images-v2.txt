@@ -1,1 +1,1 @@
-sonatype/nexus3:latest
+node:18-alpine
