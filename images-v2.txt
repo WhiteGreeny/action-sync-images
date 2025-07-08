@@ -1,1 +1,1 @@
-redis:7
+quay.io/rustfs/rustfs:latest,rustfs:latest
