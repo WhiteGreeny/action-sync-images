@@ -1,1 +1,1 @@
-quay.io/rustfs/rustfs:latest,rustfs:latest
+danielszabo99/microbin:latest,microbin:latest
