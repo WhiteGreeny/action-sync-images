@@ -4,7 +4,6 @@ FROM busybox:musl AS busybox
 
 FROM scratch
 
-LABEL maintainer="yangyi@sdas.org"
 
 COPY --from=kaniko /kaniko /kaniko
 COPY --from=busybox /bin /busybox
