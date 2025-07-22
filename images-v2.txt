@@ -1,1 +1,1 @@
-danielszabo99/microbin:latest,microbin:latest
+gcr.io/kaniko-project/executor:v1.24.0,kaniko-executor:v1.24.0
