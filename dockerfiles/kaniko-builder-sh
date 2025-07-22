@@ -1,6 +1,7 @@
-FROM gcr.io/kaniko-project/executor:v1.14.0-debug as kaniko
+FROM gcr.io/kaniko-project/executor:v1.24.0 as kaniko
 FROM mplatform/manifest-tool:alpine-v2.0.8 as manifest-tool
 FROM busybox:musl AS busybox
+FROM mikefarah/yq:4 AS yq
 
 FROM scratch
 
@@ -8,11 +9,11 @@ FROM scratch
 COPY --from=kaniko /kaniko /kaniko
 COPY --from=busybox /bin /busybox
 COPY --from=manifest-tool /manifest-tool /busybox/manifest-tool
+COPY --from=yq /usr/bin/yq /usr/local/bin/yq
 
 ENV HOME /root
 ENV USER root
 ENV PATH /usr/local/bin:/kaniko:/busybox
-ENV DOCKER_CONFIG /kaniko/.docker/
 ENV SSL_CERT_DIR=/kaniko/ssl/certs
 ENV DOCKER_CONFIG=/kaniko/.docker/
 
