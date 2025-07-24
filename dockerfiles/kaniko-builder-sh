@@ -9,7 +9,7 @@ FROM scratch
 COPY --from=kaniko /kaniko /kaniko
 COPY --from=busybox /bin /busybox
 COPY --from=manifest-tool /manifest-tool /busybox/manifest-tool
-COPY --from=yq /usr/bin/yq /usr/local/bin/yq
+COPY --from=yq /usr/bin/yq /busybox/yq
 
 ENV HOME /root
 ENV USER root
