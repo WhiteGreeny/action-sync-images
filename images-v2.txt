@@ -1,1 +1,1 @@
-mikefarah/yq:4,yq:4
+container-registry.oracle.com/database/free:latest
