@@ -1,1 +1,1 @@
-container-registry.oracle.com/database/free:latest
+ghcr.io/home-assistant/home-assistant:stable,home-assistant:stable
