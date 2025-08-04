@@ -1,1 +1,1 @@
-ghcr.io/home-assistant/home-assistant:stable,home-assistant:stable
+nodered/node-red:latest,node-red:latest
