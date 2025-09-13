@@ -1,3 +1,1 @@
-quay.io/argoproj/argocd:v3.1.5,argocd:v3.1.5
-ghcr.io/dexidp/dex:v2.43.0,dex:v2.43.0
-redis:7.2.7-alpine
+docker.gitea.com/gitea:1.24.6,gitea:1.24.6
