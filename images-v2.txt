@@ -1,1 +1,3 @@
-registry:3
+quay.io/argoproj/argocd:v3.1.5
+ghcr.io/dexidp/dex:v2.43.0
+redis:7.2.7-alpine
