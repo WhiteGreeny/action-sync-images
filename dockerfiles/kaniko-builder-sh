@@ -4,6 +4,8 @@ FROM mikefarah/yq:4 AS yq
 
 FROM bash:latest
 
+RUN rm -rf /var/spool
+
 
 COPY --from=kaniko /kaniko /kaniko
 COPY --from=manifest-tool /manifest-tool /bin/manifest-tool
