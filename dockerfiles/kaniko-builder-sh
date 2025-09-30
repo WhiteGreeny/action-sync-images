@@ -9,8 +9,7 @@ COPY --from=kaniko /kaniko /kaniko
 COPY --from=manifest-tool /manifest-tool /bin/manifest-tool
 COPY --from=yq /usr/bin/yq /bin/yq
 
-ENV HOME /root
-ENV USER root
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/kaniko
 ENV SSL_CERT_DIR=/kaniko/ssl/certs
 ENV DOCKER_CONFIG=/kaniko/.docker/
 
