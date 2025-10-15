@@ -1,1 +1,1 @@
-redis:7.0.14-alpine
+xubiaolin/zerotier-planet:latest
