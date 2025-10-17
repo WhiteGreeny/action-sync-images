@@ -1,1 +1,3 @@
-xubiaolin/zerotier-planet:latest
+elasticsearch:7.17.28
+elasticsearch:7.17.21
+
