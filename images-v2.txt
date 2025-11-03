@@ -1,2 +1,2 @@
-redis:7.2.11
-
+centos:centos6.9
+centos:centos6.6
