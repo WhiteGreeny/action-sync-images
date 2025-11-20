@@ -1,2 +1,1 @@
-centos:centos6.9
-centos:centos6.6
+nginx:stable
