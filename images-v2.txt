@@ -1,1 +1,1 @@
-nginx:stable
+hagb/docker-atrust:latest
