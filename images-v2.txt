@@ -1,1 +1,1 @@
-hagb/docker-atrust:latest
+kubesphere/ks-apiserver:3.4.1
