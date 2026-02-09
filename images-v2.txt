@@ -1,1 +1,1 @@
-kubesphere/ks-apiserver:3.4.1
+rclone/rclone:1.73
