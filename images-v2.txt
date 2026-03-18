@@ -1,1 +1,4 @@
-rclone/rclone:1.73
+onlyoffice/documentserver:9.3
+rabbitmq:3
+postgres:15
+ubuntu:24.04
