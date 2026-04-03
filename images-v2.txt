@@ -1,3 +1,5 @@
-quay.io/argoproj/argocd:v3.3.6,argoproj-argocd:v3.3.6
-ghcr.io/dexidp/dex:v2.43.0,dexidp-dex:v2.43.0
-redis:8.2.3-alpine
+grafana/loki:3.6.7
+grafana/loki-canary:3.6.7
+prom/memcached-exporter:v0.15.4
+memcached:1.6.39-alpine
+nginxinc/nginx-unprivileged:1.29-alpine
