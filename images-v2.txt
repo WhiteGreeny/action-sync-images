@@ -1,2 +1,1 @@
-busybox:1.37.0
-grafana/grafana:12.3.1
+ghcr.io/jkroepke/kube-webhook-certgen:1.8.0
