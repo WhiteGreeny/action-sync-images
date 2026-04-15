@@ -1,2 +1,4 @@
-grafana/alloy:v1.15.0
-quay.io/prometheus-operator/prometheus-config-reloader:v0.81.0,prometheus-operator-prometheus-config-reloader:v0.81.0
+eclipse-temurin:21
+eclipse-temurin:8
+eclipse-temurin:17
+eclipse-temurin:25
