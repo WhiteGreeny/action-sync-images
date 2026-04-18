@@ -1,1 +1,4 @@
-registry.k8s.io/pause:3.9,library-pause:3.9
+eclipse-temurin:21-jre
+eclipse-temurin:8-jre
+eclipse-temurin:17-jre
+eclipse-temurin:25-jre
