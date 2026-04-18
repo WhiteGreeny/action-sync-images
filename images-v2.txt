@@ -1,4 +1,2 @@
-eclipse-temurin:21-jre
-eclipse-temurin:8-jre
-eclipse-temurin:17-jre
-eclipse-temurin:25-jre
+minio/mc:latest
+hengyunabc/arthas:latest
