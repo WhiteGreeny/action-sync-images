@@ -1,2 +1,1 @@
-minio/mc:latest
-hengyunabc/arthas:latest
+quay.io/buildah/stable:latest,buildah-stable:latest
