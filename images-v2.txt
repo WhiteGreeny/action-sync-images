@@ -1,1 +1,1 @@
-astral/uv:python3.12-trixie
+ghcr.io/kite-org/kite:latest,kite-org-kite:latest
