@@ -1,2 +1,1 @@
-node:22-slim
-node:24-slim
+postgres:17
