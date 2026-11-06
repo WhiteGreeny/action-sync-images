@@ -43,7 +43,6 @@ jobs:
       IMAGES_FILE: ${{ inputs.images_file || 'images-v2.txt' }}
       IMAGE_FILTER: ${{ inputs.image_filter }}
       DRY_RUN: ${{ inputs.dry_run }}
-      REGISTRY_AUTH_FILE: ${{ runner.temp }}/skopeo-auth.json
 
     steps:
       - uses: actions/checkout@v6
@@ -58,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-
+          REGISTRY_AUTH_FILE="${RUNNER_TEMP:?}/skopeo-auth.json"
           trim() {
             local s="$1"
             s="${s#"${s%%[![:space:]]*}"}"
