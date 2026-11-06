@@ -58,6 +58,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           REGISTRY_AUTH_FILE="${RUNNER_TEMP:?}/skopeo-auth.json"
+
           trim() {
             local s="$1"
             s="${s#"${s%%[![:space:]]*}"}"
@@ -213,6 +214,23 @@ jobs:
             destination_sources["$DST_REF"]="$SRC_REF"
 
             echo "[$selected] $SRC_REF -> $DST_REF"
+
+            echo "Source: $SRC_REF"
+
+            skopeo inspect --raw \
+              --authfile "$REGISTRY_AUTH_FILE" \
+              "docker://$SRC_REF" |
+            jq -r '
+              .manifests[]? |
+              [
+                (.platform.os // "unknown"),
+                (.platform.architecture // "unknown"),
+                (.annotations["vnd.docker.reference.type"] // "-"),
+                .mediaType
+              ] | @tsv
+            '
+            skopeo --version
+
             if [[ "$DRY_RUN" == true ]]; then
               ((successes+=1))
               rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Dry run |")
