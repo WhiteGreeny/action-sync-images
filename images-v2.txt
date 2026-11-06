@@ -1,1 +1,1 @@
-redis:8
+ghcr.io/home-assistant/home-assistant:stable,home-assistant:stable
