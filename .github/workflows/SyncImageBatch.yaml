@@ -2,69 +2,235 @@ name: Docker Image Sync Batch
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [master]
   workflow_dispatch:
+    inputs:
+      images_file:
+        description: Image list file (relative to repository root)
+        type: string
+        required: true
+        default: images-v2.txt
+      image_filter:
+        description: Only sync this source image (exact match; empty means all)
+        type: string
+        required: false
+      dry_run:
+        description: Preview mappings without copying images
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Avoid concurrent writes to the same target image tags.
+concurrency:
+  group: docker-image-sync-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
-
-  build:
-
+  sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
+      REGISTRY_NS: ${{ secrets.REGISTRY_NS }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      # Optional: authenticate to one additional private source registry.
+      SOURCE_REGISTRY_URL: ${{ secrets.SOURCE_REGISTRY_URL }}
+      SOURCE_USERNAME: ${{ secrets.SOURCE_USERNAME }}
+      SOURCE_PASSWORD: ${{ secrets.SOURCE_PASSWORD }}
+      IMAGES_FILE: ${{ inputs.images_file || 'images-v2.txt' }}
+      IMAGE_FILTER: ${{ inputs.image_filter }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      REGISTRY_AUTH_FILE: ${{ runner.temp }}/skopeo-auth.json
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Login to ACR
-        uses: aliyun/acr-login@v1
-        with:
-          login-server: https://${{ secrets.REGISTRY_URL }}
-          username: "${{ secrets.DOCKER_USERNAME }}"
-          password: "${{ secrets.DOCKER_PASSWORD }}"
-      - name: Build and push image
+      - uses: actions/checkout@v6
+
+      - name: Install skopeo
+        if: ${{ !inputs.dry_run }}
         run: |
-          # 读取文件内容，逐行处理
-          while IFS= read -r line; do
-              if grep -q "^#" <<< "$line"; then
-                  # 如果是注释行，则跳过处理
-                  continue
-              elif [ -z "$line" ]; then
-                  # 如果是空行，则跳过处理
-                  continue
-              elif grep -q "," <<< "$line"; then
-                  # 如果包含逗号，则使用 cut 命令进行分割
-                  part1=$(echo "$line" | cut -d',' -f1)
-                  part2=$(echo "$line" | cut -d',' -f2)
-                  # 输出分隔后的两部分内容（可选）
-                  echo "Part 1: $part1"
-                  echo "Part 2: $part2"
-                  IMAGE_ORIGIN=${part1}
-                  IMAGE_TARGET=${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part2}
-              else
-                  # 根据斜杠分隔成两部分
-                  part1=$(echo "$line" | cut -d'/' -f1)
-                  part2=$(echo "$line" | cut -d'/' -f2)
-                  if [[ ! $line =~ / ]] ; then
-                      part1=library
-                  fi
-                  # 输出分隔后的两部分内容（可选）
-                  echo "Part 1: $part1"
-                  echo "Part 2: $part2"
-                  IMAGE_ORIGIN=${part1}/${part2}
-                  IMAGE_TARGET=${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_NS }}/${part1}-${part2}
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+
+      - name: Copy container images (all platforms)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          trim() {
+            local s="$1"
+            s="${s#"${s%%[![:space:]]*}"}"
+            s="${s%"${s##*[![:space:]]}"}"
+            printf '%s' "$s"
+          }
+
+          REGISTRY_URL="${REGISTRY_URL#https://}"
+          REGISTRY_URL="${REGISTRY_URL%/}"
+          REGISTRY_NS="${REGISTRY_NS#/}"
+          REGISTRY_NS="${REGISTRY_NS%/}"
+          SOURCE_REGISTRY_URL="${SOURCE_REGISTRY_URL#https://}"
+          SOURCE_REGISTRY_URL="${SOURCE_REGISTRY_URL%/}"
+
+          [[ -n "$REGISTRY_URL" && -n "$REGISTRY_NS" ]] || {
+            echo '::error::REGISTRY_URL and REGISTRY_NS must be configured.'
+            exit 1
+          }
+          [[ "$REGISTRY_URL" != *'/'* && "$REGISTRY_URL" != http:* ]] || {
+            echo '::error::REGISTRY_URL must be a registry host (optionally with https:// or a port).'
+            exit 1
+          }
+          [[ -f "$IMAGES_FILE" ]] || {
+            echo "::error::Image list not found: $IMAGES_FILE"
+            exit 1
+          }
+
+          # Resolve a list entry into SRC_REF and DST_REF.
+          # Old formats: "nginx:1.27" and "nginx:1.27,custom/nginx:stable".
+          resolve_image() {
+            local entry="$1" src dst repo last tag first digest
+            src="$(trim "${entry%%,*}")"
+            [[ -n "$src" ]] || return 1
+
+            dst=''
+            if [[ "$entry" == *,* ]]; then
+              dst="$(trim "${entry#*,}")"
+              [[ -n "$dst" && "$dst" != *,* ]] || return 1
+            fi
+
+            repo="${src%%@*}"
+            last="${repo##*/}"
+            if [[ "$src" == *@* ]]; then
+              digest="${src#*@}"
+              [[ "$digest" =~ ^sha256:([0-9a-fA-F]{64})$ ]] || return 1
+              tag="sha-${BASH_REMATCH[1]:0:12}"
+            elif [[ "$last" == *:* ]]; then
+              tag="${last##*:}"
+              repo="${repo%:*}"
+              [[ -n "$tag" ]] || return 1
+            else
+              tag=latest
+              src="$src:latest"
+            fi
+
+            # Unmapped names retain the old flattened destination convention.
+            if [[ -z "$dst" ]]; then
+              repo="${repo#docker.io/}"
+              [[ "$repo" == */* ]] || repo="library/$repo"
+              dst="${repo//\//-}"
+              dst="${dst//:/-}:$tag"
+            elif [[ "${dst##*/}" != *:* ]]; then
+              # A destination with no tag inherits the source tag.
+              dst="$dst:$tag"
+            fi
+
+            # Make Docker Hub shorthand explicit, without confusing a registry
+            # with a namespace (e.g. registry.example.com:5000/team/app).
+            first="${src%%/*}"
+            if [[ "$src" != */* ]]; then
+              src="docker.io/library/$src"
+            elif [[ "$first" != localhost && "$first" != *.* && "$first" != *:* ]]; then
+              src="docker.io/$src"
+            fi
+
+            SRC_REF="$src"
+            DST_REF="$REGISTRY_URL/$REGISTRY_NS/$dst"
+          }
+
+          successes=0
+          failures=0
+          skipped=0
+          selected=0
+          rows=()
+          declare -A destination_sources=()
+
+          finish() {
+            local result=$?
+            rm -f -- "$REGISTRY_AUTH_FILE"
+            if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+              {
+                echo '### Docker image synchronization'
+                echo "Successful: $successes; failed: $failures; skipped: $skipped"
+                echo '| Source | Destination | Status |'
+                echo '| --- | --- | --- |'
+                for row in "${rows[@]}"; do printf '%s\n' "$row"; done
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+            return "$result"
+          }
+          trap finish EXIT
+
+          if [[ "$DRY_RUN" != true ]]; then
+            [[ -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]] || {
+              echo '::error::DOCKER_USERNAME and DOCKER_PASSWORD must be configured.'
+              exit 1
+            }
+            printf '%s' "$DOCKER_PASSWORD" | skopeo login \
+              --authfile "$REGISTRY_AUTH_FILE" \
+              --username "$DOCKER_USERNAME" --password-stdin "$REGISTRY_URL"
+
+            if [[ -n "$SOURCE_REGISTRY_URL" ]]; then
+              [[ -n "$SOURCE_USERNAME" && -n "$SOURCE_PASSWORD" ]] || {
+                echo '::error::Optional source registry credentials are incomplete.'
+                exit 1
+              }
+              printf '%s' "$SOURCE_PASSWORD" | skopeo login \
+                --authfile "$REGISTRY_AUTH_FILE" \
+                --username "$SOURCE_USERNAME" --password-stdin "$SOURCE_REGISTRY_URL"
+            fi
+          fi
+
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            line="${line%$'\r'}"
+            line="$(trim "${line%%#*}")"  # blank lines and comments
+            [[ -n "$line" ]] || continue
+
+            raw_source="$(trim "${line%%,*}")"
+            if [[ -n "$IMAGE_FILTER" && "$raw_source" != "$IMAGE_FILTER" ]]; then
+              ((skipped+=1))
+              continue
+            fi
+
+            ((selected+=1))
+            if ! resolve_image "$line"; then
+              echo "::error::Invalid image mapping: $line"
+              ((failures+=1))
+              rows+=("| \`$raw_source\` | - | Invalid input |")
+              continue
+            fi
+
+            if [[ -n "${destination_sources[$DST_REF]:-}" ]]; then
+              if [[ "${destination_sources[$DST_REF]}" == "$SRC_REF" ]]; then
+                echo "::notice::Skipping duplicate mapping: $SRC_REF -> $DST_REF"
+                ((skipped+=1))
+                continue
               fi
-              echo "IMAGE_ORIGIN: $IMAGE_ORIGIN"
-              echo "IMAGE_TARGET: $IMAGE_TARGET"
-              IMAGE_TARGET_NAME=$(echo -n "$IMAGE_TARGET" | cut -d':' -f1)
-              IMAGE_TARGET_TAG=$(echo -n "$IMAGE_TARGET" | cut -d':' -f2)
-              ARM_IMAGE_EXISTS=true
-              docker pull --platform=amd64 $IMAGE_ORIGIN
-              docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
-              docker push ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
-              docker pull --platform=arm64 $IMAGE_ORIGIN || ARM_IMAGE_EXISTS=false
-              if [ "$ARM_IMAGE_EXISTS"=="true" ] ; then
-                  docker tag $IMAGE_ORIGIN ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
-                  docker push ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
-                  docker manifest create ${IMAGE_TARGET} ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64 ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-arm64
-              else
-                  docker manifest create ${IMAGE_TARGET} ${IMAGE_TARGET_NAME}:${IMAGE_TARGET_TAG}-amd64
-              fi
-              docker manifest push ${IMAGE_TARGET}
-          done < images-v2.txt
+              echo "::error::Destination collision: $DST_REF (also from ${destination_sources[$DST_REF]})"
+              ((failures+=1))
+              rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Destination collision |")
+              continue
+            fi
+            destination_sources["$DST_REF"]="$SRC_REF"
+
+            echo "[$selected] $SRC_REF -> $DST_REF"
+            if [[ "$DRY_RUN" == true ]]; then
+              ((successes+=1))
+              rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Dry run |")
+            elif skopeo copy --all --retry-times 3 \
+                 --authfile "$REGISTRY_AUTH_FILE" \
+                 "docker://$SRC_REF" "docker://$DST_REF"; then
+              ((successes+=1))
+              rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Copied |")
+            else
+              echo "::error::Copy failed: $SRC_REF -> $DST_REF"
+              ((failures+=1))
+              rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Failed |")
+            fi
+          done < "$IMAGES_FILE"
+
+          ((selected > 0)) || {
+            echo '::error::No images selected (check image_filter / images_file).'
+            exit 1
+          }
+          ((failures == 0)) || exit 1
