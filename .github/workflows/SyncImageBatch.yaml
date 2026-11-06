@@ -235,12 +235,12 @@ jobs:
               ((successes+=1))
               rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Dry run |")
             elif skopeo copy \
-                  --multi-arch=linux/amd64,linux/arm64 \
-                  --strip-removed-platforms \
-                  --remove-list-signatures \
-                  --authfile "$REGISTRY_AUTH_FILE" \
-                  "docker://$SRC_REF" \
-                  "docker://$DST_REF"; then
+                    --format v2s2 \
+                    --dest-compress-format gzip \
+                    --dest-force-compress-format \
+                    --authfile "$REGISTRY_AUTH_FILE" \
+                    "docker://$SRC_REF" \
+                    "docker://${DST_REF}-test-amd64"; then
               ((successes+=1))
               rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Copied |")
             else
