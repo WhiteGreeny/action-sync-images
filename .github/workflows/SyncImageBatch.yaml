@@ -52,6 +52,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y skopeo
+      - name: Check Skopeo container version
+        run: |
+          docker run --rm quay.io/skopeo/stable:latest --version
 
       - name: Copy container images (all platforms)
         shell: bash
