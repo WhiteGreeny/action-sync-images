@@ -231,6 +231,55 @@ jobs:
             '
             skopeo --version
 
+            # 临时诊断：查看源镜像 AMD64 的 Manifest 和层格式
+            if [[ "$DRY_RUN" != true ]]; then
+              echo "::group::Inspect image layers: $SRC_REF"
+            
+              if raw_manifest=$(skopeo inspect --raw \
+                --authfile "$REGISTRY_AUTH_FILE" \
+                "docker://$SRC_REF"); then
+            
+                # 从多架构索引找到 AMD64 子镜像的 Digest
+                amd64_digest=$(jq -r '
+                  .manifests[]?
+                  | select(.platform.os == "linux"
+                           and .platform.architecture == "amd64")
+                  | .digest
+                ' <<< "$raw_manifest" | head -n 1)
+            
+                if [[ -n "$amd64_digest" ]]; then
+                  # 去掉来源镜像的 Tag 或 Digest，保留仓库名
+                  source_repo="${SRC_REF%%@*}"
+                  last_part="${source_repo##*/}"
+            
+                  if [[ "$last_part" == *:* ]]; then
+                    source_repo="${source_repo%:*}"
+                  fi
+            
+                  # 查看 AMD64 子镜像的所有层类型
+                  if ! skopeo inspect --raw \
+                    --authfile "$REGISTRY_AUTH_FILE" \
+                    "docker://${source_repo}@${amd64_digest}" |
+                    jq -r '
+                      .config.mediaType,
+                      (.layers[]?.mediaType)
+                    '; then
+                    echo "::warning::Failed to inspect AMD64 layers"
+                  fi
+                else
+                  # 非多架构镜像，直接读取其层类型
+                  jq -r '
+                    .config.mediaType,
+                    (.layers[]?.mediaType)
+                  ' <<< "$raw_manifest"
+                fi
+              else
+                echo "::warning::Failed to inspect source manifest"
+              fi
+            
+              echo "::endgroup::"
+            fi
+
             if [[ "$DRY_RUN" == true ]]; then
               ((successes+=1))
               rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Dry run |")
