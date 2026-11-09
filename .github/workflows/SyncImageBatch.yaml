@@ -1,5 +1,9 @@
 name: Docker Image Sync Batch
 
+# ACR-compatible mirror of runnable image platforms. OCI/Zstd layers are
+# converted to Docker v2s2/Gzip, so destination digests will usually change.
+# Non-runnable index entries (e.g. provenance/SBOM attestations) are omitted.
+
 on:
   push:
     branches: [master]
@@ -47,20 +51,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install skopeo
+      - name: Install tools and verify Buildx
         if: ${{ !inputs.dry_run }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y skopeo
-      - name: Check Skopeo container version
-        run: |
-          docker run --rm quay.io/skopeo/stable:latest --version
+          sudo apt-get install -y skopeo jq
+          docker buildx version
 
-      - name: Copy container images (all platforms)
+      - name: Copy container images (normalize formats and preserve platforms)
         shell: bash
         run: |
           set -Eeuo pipefail
           REGISTRY_AUTH_FILE="${RUNNER_TEMP:?}/skopeo-auth.json"
+          DOCKER_CONFIG="$(mktemp -d "${RUNNER_TEMP:?}/docker-auth.XXXXXX")"
+          export DOCKER_CONFIG
 
           trim() {
             local s="$1"
@@ -151,6 +155,8 @@ jobs:
           finish() {
             local result=$?
             rm -f -- "$REGISTRY_AUTH_FILE"
+            rm -f -- "$DOCKER_CONFIG/config.json"
+            rmdir -- "$DOCKER_CONFIG" 2>/dev/null || true
             if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
               {
                 echo '### Docker image synchronization'
@@ -172,6 +178,8 @@ jobs:
             printf '%s' "$DOCKER_PASSWORD" | skopeo login \
               --authfile "$REGISTRY_AUTH_FILE" \
               --username "$DOCKER_USERNAME" --password-stdin "$REGISTRY_URL"
+            printf '%s' "$DOCKER_PASSWORD" | docker login \
+              --username "$DOCKER_USERNAME" --password-stdin "$REGISTRY_URL"
 
             if [[ -n "$SOURCE_REGISTRY_URL" ]]; then
               [[ -n "$SOURCE_USERNAME" && -n "$SOURCE_PASSWORD" ]] || {
@@ -183,6 +191,67 @@ jobs:
                 --username "$SOURCE_USERNAME" --password-stdin "$SOURCE_REGISTRY_URL"
             fi
           fi
+
+          # Skopeo 1.21/1.22 does not support --strip-removed-platforms.
+          # Copy each runnable platform separately, converting OCI/Zstd layers
+          # to Docker schema 2/Gzip, then assemble the destination manifest list.
+          sync_image() {
+            local src="$1" dst="$2"
+            local raw_manifest platform_lines os arch variant arch_ref suffix
+            local -a platform_override=() arch_refs=()
+
+            raw_manifest="$(skopeo inspect --raw \
+              --authfile "$REGISTRY_AUTH_FILE" "docker://$src")" || return 1
+
+            # A single-platform image needs no manifest-list assembly.
+            if ! jq -e '.manifests | type == "array"' > /dev/null <<< "$raw_manifest"; then
+              skopeo copy --retry-times 3 \
+                --format v2s2 \
+                --dest-compress-format gzip \
+                --dest-force-compress-format \
+                --authfile "$REGISTRY_AUTH_FILE" \
+                "docker://$src" "docker://$dst"
+              return $?
+            fi
+
+            # Filter attestation manifests (unknown/unknown), but keep every
+            # actual OS/architecture/variant from the source image index.
+            platform_lines="$(jq -r '
+              .manifests[]
+              | select(.platform.os != null and .platform.architecture != null)
+              | select(.platform.os != "unknown" and .platform.architecture != "unknown")
+              | [.platform.os, .platform.architecture, (.platform.variant // "")]
+              | @tsv
+            ' <<< "$raw_manifest" | sort -u)" || return 1
+
+            [[ -n "$platform_lines" ]] || {
+              echo "::error::No runnable platforms found: $src"
+              return 1
+            }
+
+            while IFS=$'\t' read -r os arch variant; do
+              platform_override=(--override-os "$os" --override-arch "$arch")
+              suffix="${os}-${arch}"
+              if [[ -n "$variant" ]]; then
+                platform_override+=(--override-variant "$variant")
+                suffix="${suffix}-${variant//\//-}"
+              fi
+              arch_ref="${dst}-${suffix}"
+              echo "Copying $os/$arch${variant:+/$variant} -> $arch_ref"
+
+              skopeo "${platform_override[@]}" copy --retry-times 3 \
+                --format v2s2 \
+                --dest-compress-format gzip \
+                --dest-force-compress-format \
+                --authfile "$REGISTRY_AUTH_FILE" \
+                "docker://$src" "docker://$arch_ref" || return 1
+              arch_refs+=("$arch_ref")
+            done <<< "$platform_lines"
+
+            # Only references blobs already uploaded into this same ACR repo.
+            docker buildx imagetools create --tag "$dst" "${arch_refs[@]}" || return 1
+            docker buildx imagetools inspect "$dst"
+          }
 
           while IFS= read -r line || [[ -n "$line" ]]; do
             line="${line%$'\r'}"
@@ -217,82 +286,10 @@ jobs:
             destination_sources["$DST_REF"]="$SRC_REF"
 
             echo "[$selected] $SRC_REF -> $DST_REF"
-
-            echo "Source: $SRC_REF"
-
-            skopeo inspect --raw \
-              --authfile "$REGISTRY_AUTH_FILE" \
-              "docker://$SRC_REF" |
-            jq -r '
-              .manifests[]? |
-              [
-                (.platform.os // "unknown"),
-                (.platform.architecture // "unknown"),
-                (.annotations["vnd.docker.reference.type"] // "-"),
-                .mediaType
-              ] | @tsv
-            '
-            skopeo --version
-
-            # 临时诊断：查看源镜像 AMD64 的 Manifest 和层格式
-            if [[ "$DRY_RUN" != true ]]; then
-              echo "::group::Inspect image layers: $SRC_REF"
-            
-              if raw_manifest=$(skopeo inspect --raw \
-                --authfile "$REGISTRY_AUTH_FILE" \
-                "docker://$SRC_REF"); then
-            
-                # 从多架构索引找到 AMD64 子镜像的 Digest
-                amd64_digest=$(jq -r '
-                  .manifests[]?
-                  | select(.platform.os == "linux"
-                           and .platform.architecture == "amd64")
-                  | .digest
-                ' <<< "$raw_manifest" | head -n 1)
-            
-                if [[ -n "$amd64_digest" ]]; then
-                  # 去掉来源镜像的 Tag 或 Digest，保留仓库名
-                  source_repo="${SRC_REF%%@*}"
-                  last_part="${source_repo##*/}"
-            
-                  if [[ "$last_part" == *:* ]]; then
-                    source_repo="${source_repo%:*}"
-                  fi
-            
-                  # 查看 AMD64 子镜像的所有层类型
-                  if ! skopeo inspect --raw \
-                    --authfile "$REGISTRY_AUTH_FILE" \
-                    "docker://${source_repo}@${amd64_digest}" |
-                    jq -r '
-                      .config.mediaType,
-                      (.layers[]?.mediaType)
-                    '; then
-                    echo "::warning::Failed to inspect AMD64 layers"
-                  fi
-                else
-                  # 非多架构镜像，直接读取其层类型
-                  jq -r '
-                    .config.mediaType,
-                    (.layers[]?.mediaType)
-                  ' <<< "$raw_manifest"
-                fi
-              else
-                echo "::warning::Failed to inspect source manifest"
-              fi
-            
-              echo "::endgroup::"
-            fi
-
             if [[ "$DRY_RUN" == true ]]; then
               ((successes+=1))
               rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Dry run |")
-            elif skopeo copy \
-                    --format v2s2 \
-                    --dest-compress-format gzip \
-                    --dest-force-compress-format \
-                    --authfile "$REGISTRY_AUTH_FILE" \
-                    "docker://$SRC_REF" \
-                    "docker://${DST_REF}-test-amd64"; then
+            elif sync_image "$SRC_REF" "$DST_REF"; then
               ((successes+=1))
               rows+=("| \`$SRC_REF\` | \`$DST_REF\` | Copied |")
             else
