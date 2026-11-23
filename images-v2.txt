@@ -1,1 +1,1 @@
-ghcr.io/talebook/talebook:latest,talebook:latest
+nginx:stable
